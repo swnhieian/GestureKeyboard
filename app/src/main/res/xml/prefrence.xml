@@ -1,0 +1,34 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <PreferenceCategory
+        android:title="键盘大小">
+
+        <EditTextPreference
+            android:key="kbd_width"
+            android:title="键盘宽度"
+            app:useSimpleSummaryProvider="true"
+            android:numeric="decimal"
+            android:defaultValue="200"/>
+
+        <EditTextPreference
+            android:key="kbd_height"
+            android:title="键盘高度"
+            android:defaultValue="200"
+            app:useSimpleSummaryProvider="true"/>
+
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="键盘位置">
+
+        <EditTextPreference
+            android:key="kbd_top"
+            android:title="上"
+            android:defaultValue="1000"
+            app:useSimpleSummaryProvider="true"/>
+
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
