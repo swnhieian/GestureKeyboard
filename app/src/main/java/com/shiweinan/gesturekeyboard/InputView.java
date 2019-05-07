@@ -22,6 +22,7 @@ import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
@@ -30,9 +31,10 @@ import androidx.preference.PreferenceManager;
  * TODO: document your custom view class.
  */
 public class InputView extends View {
-    Recognizer recognizer;
+    Lexicon recognizer;
     MainActivity mainView;
     List<PointF> gesture;
+    String[] phrase;
 
     public InputView(Context context) {
         super(context);
@@ -50,9 +52,9 @@ public class InputView extends View {
     }
 
     private void init() {
-        recognizer = new Recognizer();
+        recognizer = new Lexicon(getContext());
         gesture = new ArrayList<>();
-        //
+        phrase = "a problem with the machine".split(" ");
     }
 
     @Override
@@ -68,7 +70,8 @@ public class InputView extends View {
                 gesture.add(new PointF(event.getX(), event.getY()));
                 break;
             case MotionEvent.ACTION_UP:
-                List<String> results = recognizer.recognize(gesture);
+
+                List<String> results = recognizer.recognize(gesture, mainView.word);
                 mainView.showCandidates(results);
                 gesture.clear();
                 break;
