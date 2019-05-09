@@ -1,21 +1,15 @@
 package com.shiweinan.gesturekeyboard;
 
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.content.Context;
 import android.content.SharedPreferences;
 import  android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.io.*;
-import java.util.Random;
 import androidx.preference.PreferenceManager;
 
 public class Lexicon {
-    /*from former individual class PathCalc
-    * */
     private static final int SampleSize = 32;
     private static final float eps = 1e-6f;
     private static final float inf = 1e10f;
@@ -42,29 +36,15 @@ public class Lexicon {
     private Candidate[] candsTmp_2 = new Candidate[CandidatesNum];
     private Candidate[] candsTmp_3 = new Candidate[CandidatesNum];
     private Candidate[] candsTmp_4 = new Candidate[CandidatesNum];
-    //private List<Candidate> history =  new ArrayList<>();
     public String text = "", under = "";
 
     //Constants
     private static final int LexiconSize = 10000;
-    private static final int RadialNum = 5;
     private static final float AnyStartThr = 2.5f;
 
     public static PointF StartPoint;
-    public static PointF StartPointRelative = new PointF(0f, 0f);
 
-    //Parameters
-    public static boolean isCut = false;
-    public static boolean useRadialMenu = true;
-    private Map<String, Float> katzAlpha = new HashMap<String, Float>();
-    private Map<String, Float> bigramMap = new HashMap<String, Float>();
-    //Internal Variables
-    private String[] words;
-    private int panel;
     private List<PointF> keyPos = new ArrayList<>();
-
-    private List<String> phrase = new ArrayList<>();
-    private List<Integer> phraseList = new ArrayList<>();
 
     private List<Entry> dict_0 = new ArrayList<>(); //size of 10000
     private int[] dictSize = {10000,5000,2000,1000,500};
@@ -124,12 +104,9 @@ public class Lexicon {
     }
 
     void Start(){
-        //history.clear();
-        //ChangeCandidatesChoose(false);
-        //SetRadialMenuDisplay(false);
         CalcKeyLayout();
         CalcLexicon();
-        InitPhrases();
+        Clear();
     }
 
     void CalcKeyLayout(){
@@ -164,7 +141,6 @@ public class Lexicon {
 
     void CalcLexicon() {
         InputStream inputStream = context.getResources().openRawResource(R.raw.anc_written_noduplicatepluspangram);
-        //InputStream inputStream = context.getResources().openRawResource(R.raw.bigrams_ldc_10k_katz_1m_phrase);
         List<String> lines = new ArrayList<>();
         try {
             if (inputStream != null) {
@@ -181,118 +157,20 @@ public class Lexicon {
         } catch (IOException e) {
             Log.d("ANC_written_clean", e.getMessage());
         }
-
-        //int bigramsNum = Integer.parseInt(lines.get(0));
-        /* below are for bigram
-        /*
-        if (bigramMap.size() == 0) {
-            for (int i = 1; i <= bigramsNum; ++i) {
-                String[] data = lines.get(i).split(" ");
-                bigramMap.put(data[0] + ' ' + data[1], Float.parseFloat(data[2]));
-            }
-        }
-        */
-
-        //int unigramsNum = Integer.parseInt(lines.get(bigramsNum + 1));
-        /*unigramsNum shrinks half fours time*/
         int unigramsNum = dictSize[0];
         Log.d("Unigram", "Unigram: " + unigramsNum);
         dict_0.clear();
 
         for (int i = 0; i < unigramsNum; ++i) {
-            //String[] data = lines.get(i + bigramsNum + 2).split(" ");
             String[] data = lines.get(i).split(" ");
 
-            /* below are for unigram's katzAlpha. Since the "pre" word in this project is fixed, we do not need pre's frequency from katzAlpha.
-            /*
-            if (!katzAlpha.containsKey(data[0]))
-                katzAlpha.put(data[0], Float.parseFloat(data[2]));
-            */
             if (data[0].equals("<s>"))
                 continue;
             Entry entry = new Entry(data[0], Long.parseLong(data[1]), this);
-            /*save entry in dicts of different size*/
             dict_0.add(entry);
-
-        }
-
-
-    }
-
-    void InitPhrases()
-    {
-        InputStream inputStream = context.getResources().openRawResource(R.raw.pangrams_phrases);
-        List<String> lines=new ArrayList<>();
-        try {
-            if (inputStream != null) {
-                InputStreamReader inputreader = new InputStreamReader(inputStream);
-                BufferedReader buffreader = new BufferedReader(inputreader);
-                String line;
-                while ((line = buffreader.readLine()) != null) {
-                    lines.add(line);
-                }
-                inputStream.close();
-            }
-        }
-        catch (java.io.FileNotFoundException e) {
-            Log.d("pangrams_phrases", "The File doesn't not exist.");
-        }
-        catch (IOException e) {
-            Log.d("pangrams_phrases", e.getMessage());
-        }
-        for (int i = 0; i < lines.size(); ++i) {
-            String line = lines.get(i);
-            if (line.length() <= 1)
-                continue;
-            if (line.charAt(line.length() - 1) < 'a' || line.charAt(line.length() - 1) > 'z')
-                line = line.substring(0, line.length() - 1);
-            phrase.add(line);
-            phraseList.add(i);
-        }
-        Log.d("Phrases", "Phrases: "+phrase.size());
-        SetPhraseList(UserStudy.Study1);
-        ChangePhrase(-3);
-    }
-
-
-    public void SetPhraseList(UserStudy study)
-    {
-        Random random = new Random();
-        for (int i = 0; i < phrase.size(); ++i)
-            phraseList.set(i,i);
-        for (int i = 2; i < phrase.size(); ++i)
-        {
-            int j = random.nextInt(phrase.size())%(phrase.size()-2) + 2;
-            int k = phraseList.get(i);
-            phraseList.set(i,phraseList.get(j));
-            phraseList.set(j,k);
-        }
-        if (study == UserStudy.Study2)
-        {
-            for (int b = 1; b < 8; ++b)
-                phraseList.set(b * 10, phraseList.get(1));
         }
     }
 
-
-    public void ChangePhrase() {
-        ChangePhrase(-1);
-    }
-
-    public void ChangePhrase(int id) {
-        if (id == -3)
-            words = "a problem with the engine".split(" ");
-            //textManager.SetPhrase("a problem with the engine");
-        else if (id == -1) {
-            Random random = new Random();
-            words = phrase.get(random.nextInt(phrase.size())).split(" ");
-            //textManager.SetPhrase(phrase.get(random.nextInt(phrase.size())));
-        } else
-            words = phrase.get(phraseList.get(id)).split(" ");
-        //textManager.SetPhrase(phrase[phraseList[id]]);
-        //words = textManager.GetWords();
-        Clear();
-    }
 
     public String ChangeWord(int id) {
         Entry entry = dict_0.get(id);
@@ -302,18 +180,9 @@ public class Lexicon {
 
     public void Clear() {
         for (int i = 0; i < CandidatesNum; ++i) {
-            //btn[i].GetComponentInChildren<Text>().text = "";
             if (cands[i] != null)
                 cands[i].word = "";
         }
-        /*for (int i = 0; i < RadialNum; ++i)
-            radialText[i].text = "";*/
-        /*for (int i = 0; i < CandidatesNum; ++i)
-            listText[i].text = "";*/
-        //SetRadialMenuDisplay(false);
-        //gesture.chooseCandidate = false;
-        //history.clear();
-        //textManager.Clear();
     }
 
     public static float Distance(PointF a, PointF b) {
@@ -394,13 +263,10 @@ public class Lexicon {
     }
 
     public static float match(List<PointF> A, List<PointF> B, Formula formula){
-        return match(A, B, formula, inf, false);
-    }
-    public static float match(List<PointF> A, List<PointF> B, Formula formula, float threshold){
-        return match(A, B, formula, threshold, false);
+        return match(A, B, formula, inf);
     }
     public static float match(List<PointF> A, List<PointF> B, Formula formula,
-                              float threshold, boolean isShape){
+                              float threshold){
         if (A.size() != B.size() || formula == Formula.Null)
             return inf;
         /*if (Vector2.Distance(A[0], B[0]) > KeyWidth)
@@ -437,10 +303,6 @@ public class Lexicon {
                 break;
         }
         return dis / SampleSize / keyboardWidth;
-        /*if (!isShape)
-            return Mathf.Exp(-0.5f * dis * dis / Parameter.radius / Parameter.radius);
-        else
-            return Mathf.Exp(-0.5f * dis * dis / (Parameter.radiusMul * 0.1f) / (Parameter.radiusMul * 0.1f));*/
     }
 
     public class Entry
@@ -514,7 +376,6 @@ public class Lexicon {
             candsTmp_4[i] = new Candidate("");
         }
 
-        //int h = history.size();
         for (int ii = 0; ii < dictSize[0]; ++ii)
         {
             Entry entry = dict_0.get(ii);
@@ -530,9 +391,6 @@ public class Lexicon {
                 entry.shapeSample.set(mode.ordinal(), normalize(entry.locationSample.get(mode.ordinal())));
                 entry.pts.remove(0);
             }
-            /*
-            if (Distance(stroke.get(SampleSize - 1), entry.locationSample.get(mode.ordincal()).get(SampleSize - 1))
-                    > endOffset * keyWidth && (h >= words.length || entry.word != words[h]))*/
             if (Distance(stroke.get(SampleSize - 1), entry.locationSample.get(mode.ordinal()).get(SampleSize - 1))
                     > endOffset * keyWidth)
                 continue;
@@ -634,12 +492,6 @@ public class Lexicon {
                     }
             }
         }
-        /*
-        if (h < words.length)
-            for (int i = 0; i < CandidatesNum; ++i)
-                if (candsTmp_0[i].word == words[h].toLowerCase())
-                    candsTmp_0[i].word = words[h];
-        */
         ret.add(word);
         Log.i("recognize result for word:", word);
         String dictInfo = Integer.toString(dictSize[0])+","+Integer.toString(dictSize[1])+","+Integer.toString(dictSize[2])+","+Integer.toString(dictSize[3])+","+Integer.toString(dictSize[4]);
@@ -689,86 +541,6 @@ public class Lexicon {
                 break;
             }
         }
-
-        /*
-        for (Entry entry : dict_0)
-        {
-            if (rawStroke.size() == 1 && entry.word.length() != 1)
-                continue;
-            Candidate newCandidate = new Candidate(entry.word);
-
-            if (mode == Mode.AnyStart) {
-                if (Distance(entry.locationSample.get(0).get(0), stroke.get(0)) > AnyStartThr * keyWidth)
-                    continue;
-                entry.pts.add(0, stroke.get(0));
-                entry.locationSample.set(mode.ordinal(), temporalSampling(entry.pts));
-                entry.shapeSample.set(mode.ordinal(), normalize(entry.locationSample.get(mode.ordinal())));
-                entry.pts.remove(0);
-            }
-            if (Distance(stroke.get(SampleSize - 1), entry.locationSample.get(mode.ordinal()).get(SampleSize - 1))
-                    > endOffset * keyWidth && (h >= words.length || entry.word != words[h]))
-                continue;
-
-            float biF = 0;
-            /*
-            if (bigramMap.containsKey(pre + ' ' + entry.word))
-                biF = bigramMap.get(pre + ' ' + entry.word);
-            else
-            {
-                biF = katzAlpha.get(pre) * entry.frequency;
-                if (biF == 0)
-                    continue;
-            }
-            */
-            //biF = katzAlpha.get(pre) * entry.frequency;
-        /*
-            biF = entry.frequency;
-            if (biF == 0)
-                continue;
-
-            newCandidate.language = (float)Math.log(biF);
-            newCandidate.location = match(stroke, entry.locationSample.get(mode.ordinal()), locationFormula,
-                    (newCandidate.language - candsTmp[CandidatesNum - 1].confidence) / 100 * keyboardWidth * SampleSize);
-            if (newCandidate.location == inf)
-                continue;
-
-            newCandidate.confidence = newCandidate.language - 100 * newCandidate.location;
-            //if (newCandidate.confidence < candsTmp[CandidatesNum - 1].confidence)
-            //continue;
-            for (int i = 0; i < CandidatesNum; ++i)
-                if (newCandidate.confidence > candsTmp[i].confidence)
-                {
-                    for (int j = CandidatesNum - 1; j > i; j--)
-                        candsTmp[j] = candsTmp[j-1];
-                    candsTmp[i] = newCandidate;
-                    break;
-                }
-        }
-        if (h < words.length)
-            for (int i = 0; i < CandidatesNum; ++i)
-                if (candsTmp[i].word == words[h].toLowerCase())
-                    candsTmp[i].word = words[h];
-
-        for (int i = 0; i < CandidatesNum; ++i){
-            if (candsTmp[i].word.equals("good")) {
-                ret.add(candsTmp[i].word);
-                ret.add(Integer.toString(i));
-                break;
-            }
-        }
-        */
-        /*
-        for (int i = 0; i < 5; ++i){
-            ret.add(i,candsTmp[i].word);
-        }
-        */
-        /*
-        ret.add(dict.get(0).word);
-        ret.add(dict.get(1).word);
-        ret.add(dict.get(2).word);
-        */
-        //ret.add(Float.toString(stroke.get(0).x));
-        //ret.add(Float.toString(stroke.get(0).y));
         return ret;
     }
 }

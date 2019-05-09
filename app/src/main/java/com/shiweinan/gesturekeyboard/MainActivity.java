@@ -42,6 +42,9 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v) {
                 Random random = new Random();
                 word = inputView.recognizer.ChangeWord(random.nextInt(500));
+                //去除长度为1的单词
+                while(word.length()==1)
+                    word = inputView.recognizer.ChangeWord(random.nextInt(500));
                 showWord(word);
             }
         });
