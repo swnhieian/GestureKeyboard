@@ -26,7 +26,8 @@ public class MainActivity extends AppCompatActivity {
     InputView inputView;
     Button button;
     String word;
-
+    Random random;
+    int num=0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         preference = new Preference();
@@ -36,16 +37,16 @@ public class MainActivity extends AppCompatActivity {
         inputView = (InputView)findViewById(R.id.inputView);
         inputView.setMainView(this);
         button = (Button)findViewById(R.id.button);
-
+        random = new Random(1);
         button.setOnClickListener(new View.OnClickListener(){
             @Override
                     public void onClick(View v) {
-                Random random = new Random();
                 word = inputView.recognizer.ChangeWord(random.nextInt(500));
+                num += 1;
                 //去除长度为1的单词
-                while(word.length()==1)
+                while(word.length()<=2)
                     word = inputView.recognizer.ChangeWord(random.nextInt(500));
-                showWord(word);
+                showWord(num, word);
             }
         });
     }
@@ -63,12 +64,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void showWord(String word) {
+    public void showWord(int num, String word) {
         candidateView.removeAllViews();
         TextView textview = new TextView(this);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
         layoutParams.setLayoutDirection(Constraints.LayoutParams.HORIZONTAL);
-        textview.setText(word);
+        String newword = String.format("No. %d: %s", num, word);
+        textview.setText(newword);
         textview.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         textview.setTextSize(20);
         candidateView.addView(textview, layoutParams);
